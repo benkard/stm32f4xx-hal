@@ -132,6 +132,14 @@ macro_rules! hal {
                     self.tim.cr1.modify(|_, w| w.cen().clear_bit());
                     self.tim
                 }
+
+                /// Mutably borrows the TIM peripheral
+                ///
+                /// Use this as an escape hatch if you need direct
+                /// access to the peripheral to set registers on it.
+                pub fn borrow_mut(&mut self) -> &mut $TIM {
+                    &mut self.tim
+                }
             }
 
             impl CountDown for Timer<$TIM> {
