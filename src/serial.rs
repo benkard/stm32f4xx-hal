@@ -286,6 +286,14 @@ macro_rules! halUsart {
                 pub fn release(self) -> ($USARTX, PINS) {
                     (self.usart, self.pins)
                 }
+
+                /// Mutably borrows the peripheral
+                ///
+                /// Use this as an escape hatch if you need direct
+                /// access to the peripheral to set registers on it.
+                pub fn borrow_mut(&mut self) -> (&mut $USARTX, &mut PINS) {
+                    (&mut self.usart, &mut self.pins)
+                }
             }
 
             impl hal::serial::Read<u8> for Rx<$USARTX> {
