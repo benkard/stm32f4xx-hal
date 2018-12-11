@@ -19,10 +19,10 @@ use stm32::{RCC, USART1, USART2, USART3, USART6};
 use stm32::{RCC, UART4, UART5, UART7, UART8, USART1, USART2, USART3, USART6};
 
 #[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use stm32::usart6::cr2::STOPW;
+use stm32::usart6::{cr1::OVER8W, cr2::STOPW};
 
 #[cfg(any(feature = "stm32f401", feature = "stm32f412", feature = "stm32f411"))]
-use stm32::usart1::cr2::STOPW;
+use stm32::usart1::{cr1::OVER8W, cr2::STOPW};
 
 use gpio::gpioa::{PA10, PA2, PA3, PA9};
 use gpio::gpiob::{PB6, PB7};
@@ -103,11 +103,17 @@ pub mod config {
         STOP1P5,
     }
 
+    pub enum Oversampling {
+        Oversampling8,
+        Oversampling16,
+    }
+
     pub struct Config {
         pub baudrate: Bps,
         pub wordlength: WordLength,
         pub parity: Parity,
         pub stopbits: StopBits,
+        pub oversampling: Oversampling,
     }
 
     impl Config {
@@ -145,6 +151,16 @@ pub mod config {
             self.stopbits = stopbits;
             self
         }
+
+        pub fn oversampling_16(mut self) -> Self {
+            self.oversampling = Oversampling::Oversampling16;
+            self
+        }
+
+        pub fn oversampling_8(mut self) -> Self {
+            self.oversampling = Oversampling::Oversampling8;
+            self
+        }
     }
 
     #[derive(Debug)]
@@ -158,6 +174,7 @@ pub mod config {
                 wordlength: WordLength::DataBits8,
                 parity: Parity::ParityNone,
                 stopbits: StopBits::STOP1,
+                oversampling: Oversampling::Oversampling16,
             }
         }
     }
@@ -269,6 +286,10 @@ macro_rules! halUsart {
                             .bit(match config.parity {
                                 Parity::ParityOdd => true,
                                 _ => false,
+                            }).over8()
+                            .variant(match config.oversampling {
+                                Oversampling::Oversampling16 => OVER8W::OVERSAMPLE16,
+                                Oversampling::Oversampling8 => OVER8W::OVERSAMPLE8,
                             })
                     });
 
@@ -280,6 +301,7 @@ macro_rules! halUsart {
                             StopBits::STOP2 => STOPW::STOP2,
                         })
                     });
+
                     Ok(Serial { usart, pins })
                 }
 
