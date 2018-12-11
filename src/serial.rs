@@ -4,9 +4,9 @@ use core::ptr;
 
 use hal;
 use hal::prelude::*;
-use nb;
+use nb::block;
 
-#[cfg(feature = "stm32f401")]
+#[cfg(any(feature = "stm32f401", feature = "stm32f411"))]
 use stm32::{RCC, USART1, USART2, USART6};
 
 #[cfg(feature = "stm32f407")]
@@ -21,7 +21,7 @@ use stm32::{RCC, UART4, UART5, UART7, UART8, USART1, USART2, USART3, USART6};
 #[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
 use stm32::usart6::cr2::STOPW;
 
-#[cfg(any(feature = "stm32f401", feature = "stm32f412"))]
+#[cfg(any(feature = "stm32f401", feature = "stm32f412", feature = "stm32f411"))]
 use stm32::usart1::cr2::STOPW;
 
 use gpio::gpioa::{PA10, PA2, PA3, PA9};
@@ -34,15 +34,15 @@ use gpio::gpioa::{PA0, PA1};
 #[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
 use gpio::gpiob::{PB10, PB11};
 #[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use gpio::gpioc::{PC12};
+use gpio::gpioc::PC12;
+#[cfg(feature = "stm32f412")]
+use gpio::gpioc::PC5;
 #[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
 use gpio::gpioc::{PC10, PC11};
-#[cfg(feature = "stm32f412")]
-use gpio::gpioc::{PC5};
+#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+use gpio::gpiod::PD2;
 #[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
 use gpio::gpiod::{PD8, PD9};
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
-use gpio::gpiod::{PD2};
 #[cfg(feature = "stm32f429")]
 use gpio::gpioe::{PE0, PE1};
 #[cfg(feature = "stm32f429")]
@@ -73,6 +73,8 @@ pub enum Event {
     Rxne,
     /// New data can be sent
     Txe,
+    /// Idle line state detected
+    Idle,
 }
 
 pub mod config {
@@ -290,10 +292,13 @@ macro_rules! halUsart {
                         Event::Txe => {
                             self.usart.cr1.modify(|_, w| w.txeie().set_bit())
                         },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().set_bit())
+                        },
                     }
                 }
 
-                /// Starts listening for an interrupt event
+                /// Stop listening for an interrupt event
                 pub fn unlisten(&mut self, event: Event) {
                     match event {
                         Event::Rxne => {
@@ -301,6 +306,9 @@ macro_rules! halUsart {
                         },
                         Event::Txe => {
                             self.usart.cr1.modify(|_, w| w.txeie().clear_bit())
+                        },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().clear_bit())
                         },
                     }
                 }

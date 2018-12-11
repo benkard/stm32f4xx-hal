@@ -152,9 +152,6 @@ macro_rules! gpio {
                 let offset = 2 * index;
                 let offset2 = 4 * index;
                 unsafe {
-                    &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                        w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
-                    });
                     if offset2 < 32 {
                         &(*$GPIOX::ptr()).afrl.modify(|r, w| {
                             w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
@@ -166,6 +163,9 @@ macro_rules! gpio {
                             w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
                         });
                     }
+                    &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                        w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
+                    });
                 }
             }
 
@@ -310,10 +310,10 @@ macro_rules! gpio {
                     ) -> $PXi<Input<Floating>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                          });
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                          })};
                         $PXi { _mode: PhantomData }
@@ -325,11 +325,11 @@ macro_rules! gpio {
                         ) -> $PXi<Input<PullDown>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
-                         });
                             &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
+                         });
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                          })};
                         $PXi { _mode: PhantomData }
                     }
@@ -340,11 +340,11 @@ macro_rules! gpio {
                     ) -> $PXi<Input<PullUp>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
-                         });
                             &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
+                         });
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                          })};
 
                         $PXi { _mode: PhantomData }
@@ -356,14 +356,14 @@ macro_rules! gpio {
                     ) -> $PXi<Output<OpenDrain>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
-                         });
                             &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                          });
                             &(*$GPIOX::ptr()).otyper.modify(|r, w| {
                                 w.bits(r.bits() | (0b1 << $i))
+                         });
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                          })};
 
 
@@ -377,14 +377,14 @@ macro_rules! gpio {
                         let offset = 2 * $i;
 
                         unsafe {
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
-                                w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
-                         });
                             &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
                             &(*$GPIOX::ptr()).otyper.modify(|r, w| {
                                 w.bits(r.bits() & !(0b1 << $i))
+                            });
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                          })};
 
 
@@ -436,7 +436,7 @@ macro_rules! gpio {
                         let offset = $i;
                         unsafe {
                             &(*$GPIOX::ptr()).otyper.modify(|r, w| {
-                                w.bits(r.bits() & (1 << offset))
+                                w.bits(r.bits() | (1 << offset))
                          })};
 
                         self
@@ -514,6 +514,25 @@ macro_rules! gpio {
     }
 }
 
+#[cfg(any(
+    feature = "stm32f401",
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f410",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOA, gpioa, gpioaen, PA, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
@@ -533,6 +552,25 @@ gpio!(GPIOA, gpioa, gpioaen, PA, [
     PA15: (pa15, 15, Input<Floating>),
 ]);
 
+#[cfg(any(
+    feature = "stm32f401",
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f410",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOB, gpiob, gpioben, PB, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),
@@ -552,6 +590,25 @@ gpio!(GPIOB, gpiob, gpioben, PB, [
     PB15: (pb15, 15, Input<Floating>),
 ]);
 
+#[cfg(any(
+    feature = "stm32f401",
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f410",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOC, gpioc, gpiocen, PC, [
     PC0: (pc0, 0, Input<Floating>),
     PC1: (pc1, 1, Input<Floating>),
@@ -571,6 +628,24 @@ gpio!(GPIOC, gpioc, gpiocen, PC, [
     PC15: (pc15, 15, Input<Floating>),
 ]);
 
+#[cfg(any(
+    feature = "stm32f401",
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOD, gpiod, gpioden, PD, [
     PD0: (pd0, 0, Input<Floating>),
     PD1: (pd1, 1, Input<Floating>),
@@ -590,6 +665,24 @@ gpio!(GPIOD, gpiod, gpioden, PD, [
     PD15: (pd15, 15, Input<Floating>),
 ]);
 
+#[cfg(any(
+    feature = "stm32f401",
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOE, gpioe, gpioeen, PE, [
     PE0: (pe0, 0, Input<Floating>),
     PE1: (pe1, 1, Input<Floating>),
@@ -609,7 +702,22 @@ gpio!(GPIOE, gpioe, gpioeen, PE, [
     PE15: (pe15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+#[cfg(any(
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOF, gpiof, gpiofen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
@@ -629,7 +737,22 @@ gpio!(GPIOF, gpiof, gpiofen, PF, [
     PF15: (pf15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+#[cfg(any(
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOG, gpiog, gpiogen, PG, [
     PG0: (pg0, 0, Input<Floating>),
     PG1: (pg1, 1, Input<Floating>),
@@ -649,7 +772,24 @@ gpio!(GPIOG, gpiog, gpiogen, PG, [
     PG15: (pg15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f407", feature = "stm32f412", feature = "stm32f429"))]
+#[cfg(any(
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f410",
+    feature = "stm32f411",
+    feature = "stm32f412",
+    feature = "stm32f413",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f423",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f446",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOH, gpioh, gpiohen, PH, [
     PH0: (ph0, 0, Input<Floating>),
     PH1: (ph1, 1, Input<Floating>),
@@ -669,7 +809,24 @@ gpio!(GPIOH, gpioh, gpiohen, PH, [
     PH15: (ph15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f407", feature = "stm32f429"))]
+#[cfg(any(feature = "stm32f401"))]
+gpio!(GPIOH, gpioh, gpiohen, PH, [
+    PH0: (ph0, 0, Input<Floating>),
+    PH1: (ph1, 1, Input<Floating>),
+]);
+
+#[cfg(any(
+    feature = "stm32f405",
+    feature = "stm32f407",
+    feature = "stm32f415",
+    feature = "stm32f417",
+    feature = "stm32f427",
+    feature = "stm32f429",
+    feature = "stm32f437",
+    feature = "stm32f439",
+    feature = "stm32f469",
+    feature = "stm32f479"
+))]
 gpio!(GPIOI, gpioi, gpioien, PI, [
     PI0: (pi0, 0, Input<Floating>),
     PI1: (pi1, 1, Input<Floating>),
