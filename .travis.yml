@@ -3,16 +3,18 @@ rust:
   - stable
   - nightly
 cache: cargo
+
 env:
-- MCU=stm32f401
-- MCU=stm32f407
-- MCU=stm32f412
-- MCU=stm32f429
-- MCU=stm32f411
+  - COMMAND=""
+  - COMMAND=size_check
+
 matrix:
   allow_failures:
     - rust: nightly
+    - env: COMMAND=size_check
   fast_finish: true
-script:
+
+install:
   - rustup target add thumbv7em-none-eabihf
-  - cargo build --features=$MCU
+
+script: tools/check.py $COMMAND
