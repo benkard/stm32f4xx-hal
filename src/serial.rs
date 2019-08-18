@@ -1768,28 +1768,28 @@ macro_rules! halUsart {
         $(
         impl<PINS> Serial<$USARTX, PINS> {
             fn config_stop(self, config: &config::Config) -> Self {
-                use crate::stm32::usart1::cr2::STOPW;
+                use crate::stm32::usart1::cr2::STOP_A;
                 use self::config::*;
 
                 self.usart.cr2.write(|w| {
                     w.stop().variant(match config.stopbits {
-                        StopBits::STOP0P5 => STOPW::STOP0P5,
-                        StopBits::STOP1 => STOPW::STOP1,
-                        StopBits::STOP1P5 => STOPW::STOP1P5,
-                        StopBits::STOP2 => STOPW::STOP2,
+                        StopBits::STOP0P5 => STOP_A::STOP0P5,
+                        StopBits::STOP1 => STOP_A::STOP1,
+                        StopBits::STOP1P5 => STOP_A::STOP1P5,
+                        StopBits::STOP2 => STOP_A::STOP2,
                     })
                 });
                 self
             }
 
             fn config_oversampling(self, config: &config::Config) -> Self {
-                use crate::stm32::usart1::cr1::OVER8W;
+                use crate::stm32::usart1::cr1::OVER8_A;
                 use self::config::*;
 
                 self.usart.cr1.write(|w| {
                     w.over8().variant(match config.oversampling {
-                        Oversampling::Oversampling16 => OVER8W::OVERSAMPLE16,
-                        Oversampling::Oversampling8 => OVER8W::OVERSAMPLE8,
+                        Oversampling::Oversampling16 => OVER8_A::OVERSAMPLE16,
+                        Oversampling::Oversampling8 => OVER8_A::OVERSAMPLE8,
                     })
                 });
                 self
@@ -1823,28 +1823,28 @@ macro_rules! halUart {
         $(
         impl<PINS> Serial<$USARTX, PINS> {
             fn config_stop(self, config: &config::Config) -> Self {
-                use crate::stm32::uart4::cr2::STOPW;
+                use crate::stm32::uart4::cr2::STOP_A;
                 use self::config::*;
 
                 self.usart.cr2.write(|w| {
                     w.stop().variant(match config.stopbits {
-                        StopBits::STOP0P5 => STOPW::STOP1,
-                        StopBits::STOP1 => STOPW::STOP1,
-                        StopBits::STOP1P5 => STOPW::STOP2,
-                        StopBits::STOP2 => STOPW::STOP2,
+                        StopBits::STOP0P5 => STOP_A::STOP1,
+                        StopBits::STOP1 => STOP_A::STOP1,
+                        StopBits::STOP1P5 => STOP_A::STOP2,
+                        StopBits::STOP2 => STOP_A::STOP2,
                     })
                 });
                 self
             }
 
             fn config_oversampling(self, config: &config::Config) -> Self {
-                use crate::stm32::uart4::cr1::OVER8W;
+                use crate::stm32::uart4::cr1::OVER8_W;
                 use self::config::*;
 
                 self.usart.cr1.write(|w| {
                     w.over8().variant(match config.oversampling {
-                        Oversampling::Oversampling16 => OVER8W::OVERSAMPLE16,
-                        Oversampling::Oversampling8 => OVER8W::OVERSAMPLE8,
+                        Oversampling::Oversampling16 => OVER8_A::OVERSAMPLE16,
+                        Oversampling::Oversampling8 => OVER8_A::OVERSAMPLE8,
                     })
                 });
                 self
